@@ -9,12 +9,30 @@
 	<script src='lib/fullcalendar.min.js'></script>
 	<script>
 
+		var commitEvents = [];
+
 		$(document).ready(function() {
 
-			$.get('https://api.github.com/repos/bvds/LaitsV3/commits?since=2013-03-01T00:00:00Z.', function(json) {
+			
+
+			$("#gitcal").click(function(){
+				var reponame = $("#reponame").val();
+				var username = $("#username").val();
+				if(!reponame || !username)
+				{
+					alert("Invalid Input: Repository Name / Username Required ");
+					return;
+				}
+
+
+			$.get('https://api.github.com/repos/'+username+'/'+reponame+'/commits?since=2013-03-01T00:00:00Z.', function(json) {
 				console.log(json);
 				var colorMap = new Object(); // Author name against the color
 				var commitEvents =  [];
+
+
+				//clear the sidebar
+				$('#usermap').html('');
 
 				for(i=0;i<json.length;i++){
 			
@@ -26,7 +44,7 @@
 						colorMap[json[i].commit.author.name]=colour;
 						//Also Append User and his/her color to sidebar
 						var html = 
-						$("#sidebar").append('<div style="width:80px;height:20px; background:'+colour+'; float:left;"></div><label style="float:left;"><b>&nbsp;'+json[i].commit.author.name+'</label><br><br>');
+						$("#usermap").append('<div style="width:80px;height:20px; background:'+colour+'; float:left;"></div><label style="float:left;"><b>&nbsp;'+json[i].commit.author.name+'</label><br><br>');
 					}
 
 					//remove Z
@@ -39,9 +57,13 @@
 					commitEvents.push(event);
 				}
 
+		$('#calendar').fullCalendar('removeEvents');
+		$('#calendar').fullCalendar( 'addEventSource', commitEvents);
+		
+		});
+	});
 
-
-		$('#calendar').fullCalendar({
+	$('#calendar').fullCalendar({
 			header: {
 				left: 'prev,next today',
 				center: 'title',
@@ -50,11 +72,11 @@
 			defaultDate: '2015-03-09',
 			editable: true,
 			eventLimit: true, // allow "more" link when too many events
-			events: commitEvents
+			events: []
 		});
-		
-		});
-	});
+
+
+			});
 
 	</script>
 <style>
@@ -74,12 +96,13 @@
 <body>
 	<div style="float:center; width:100%">
 		<div style="float:left; width:38%" id="sidebar">
-			<input type="text" placeholder="Github Username"/>
-			<input type="text" placeholder="Repository Name"/>
-			<input type="button" value="GitCal" id="#gitcal" class="fc-today-button fc-button fc-state-default fc-corner-left fc-corner-right"/>
+			<input type="text" placeholder="Github Username" id="username"/>
+			<input type="text" placeholder="Repository Name" id="reponame"/>
+			<input type="button" value="GitCal" id="gitcal" class="fc-today-button fc-button fc-state-default fc-corner-left fc-corner-right"/>
 			<br>
 			<br>
-			
+			<div id="usermap">
+			</div>
 		</div>
 		<div  style="float:right; width:62%" id='calendar'></div>
 	</div>
