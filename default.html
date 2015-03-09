@@ -22,8 +22,12 @@
 					var colour = '#'+Math.floor(Math.random()*16777215).toString(16);
 					if(colorMap[json[i].commit.author.name])
 						colour = colorMap[json[i].commit.author.name];
-					else
+					else{
 						colorMap[json[i].commit.author.name]=colour;
+						//Also Append User and his/her color to sidebar
+						var html = 
+						$("#sidebar").append('<div style="width:80px;height:20px; background:'+colour+'; float:left;"></div><label style="float:left;"><b>&nbsp;'+json[i].commit.author.name+'</label><br><br>');
+					}
 
 					//remove Z
 					date= date.slice(0,-1);
@@ -69,10 +73,13 @@
 </head>
 <body>
 	<div style="float:center; width:100%">
-		<div style="float:left; width:40%">
+		<div style="float:left; width:38%" id="sidebar">
 			<input type="text" placeholder="Github Username"/>
 			<input type="text" placeholder="Repository Name"/>
 			<input type="button" value="GitCal" id="#gitcal" class="fc-today-button fc-button fc-state-default fc-corner-left fc-corner-right"/>
+			<br>
+			<br>
+			
 		</div>
 		<div  style="float:right; width:62%" id='calendar'></div>
 	</div>
