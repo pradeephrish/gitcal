@@ -9,31 +9,25 @@
 	<script src='lib/fullcalendar.min.js'></script>
 	<script>
 
-		var commitEvents = [];
+		var colorMap; // Author name against the color
+		var url;
+		var username;
+		var reponame;
+		var pagecounter=1;
+		var commitpageMap;
 
-		$(document).ready(function() {
+		function eventsLoader(username,reponame,page){
 
-			
-
-			$("#gitcal").click(function(){
-				var reponame = $("#reponame").val();
-				var username = $("#username").val();
 				if(!reponame || !username)
 				{
 					alert("Invalid Input: Repository Name / Username Required ");
 					return;
 				}
 
-
-			$.get('https://api.github.com/repos/'+username+'/'+reponame+'/commits?since=2013-03-01T00:00:00Z.', function(json) {
+				$.get('https://api.github.com/repos/'+username+'/'+reponame+'/commits?since=2013-03-01T00:00:00Z.&page='+page, function(json) {
 				console.log(json);
-				var colorMap = new Object(); // Author name against the color
-				var commitEvents =  [];
-
-
-				//clear the sidebar
-				$('#usermap').html('');
-
+				var commitEvents =  []; //only holds new events for the current request, no repeation of events, taken care by map
+		
 				for(i=0;i<json.length;i++){
 			
 					var date = json[i].commit.author.date;
@@ -43,7 +37,6 @@
 					else{
 						colorMap[json[i].commit.author.name]=colour;
 						//Also Append User and his/her color to sidebar
-						var html = 
 						$("#usermap").append('<div style="width:80px;height:20px; background:'+colour+'; float:left;"></div><label style="float:left;"><b>&nbsp;'+json[i].commit.author.name+'</label><br><br>');
 					}
 
@@ -56,14 +49,81 @@
 					};
 					commitEvents.push(event);
 				}
+				
+				$('#calendar').fullCalendar("addEventSource", commitEvents); //update new events
+				
+			});
+		}
 
-		$('#calendar').fullCalendar('removeEvents');
-		$('#calendar').fullCalendar( 'addEventSource', commitEvents);
-		
-		});
-	});
 
-	$('#calendar').fullCalendar({
+		$(document).ready(function() {
+
+			// When click today button
+			$('body').on('click', 'button.fc-today-button', function () {
+   					 console.log("today");
+   					 pagecounter=1;
+			});
+
+			// When click next button
+			$('body').on('click', 'button.fc-next-button', function () {
+ 				console.log("next");
+ 				if(!commitpageMap) //if no map initialized, no github url provided return
+  				 		return ;
+ 				//events allready loaded for next , no need
+ 				if(pagecounter>=1)
+ 					pagecounter=pagecounter-1; //take page forward
+			});
+
+			// When click prev button
+			$('body').on('click', 'button.fc-prev-button', function () {
+  				 console.log("prev");
+  				 if(!commitpageMap) //if no map initialized, no github url provided return
+  				 		return ;
+
+  				 pagecounter=pagecounter+1;
+
+  				 if(commitpageMap[pagecounter])
+  				 		return; //events for this oen already laoded, return
+  				 else
+  				  	commitpageMap[pagecounter]=true; //put into map and then call eventsLoader
+
+  				 eventsLoader(username,reponame,pagecounter); //since pages already loaded
+			});
+
+			$("#gitcal").click(function(){
+				/*var reponame = $("#reponame").val();
+				var username = $("#username").val();*/
+				var turl = $("#url").val();
+				
+				if(!turl){
+					alert("Invalid Github URL ");
+					return;
+				}
+
+				if(!url || url!=turl){
+					url = turl; //first time
+					commitpageMap = new Object(); //new commitpageMap
+					colorMap = new Object(); //new color Map
+					$('#usermap').html('');
+					commitpageMap[1]=true; //first page loaded
+					$('#calendar').fullCalendar('removeEvents'); // clear calendar
+				}else{
+					if(commitpageMap[1])
+						return; //first page 1 of commits already laoded
+				}
+
+				var suburls = url.split("/");
+				username = suburls[suburls.length-2];
+				reponame = suburls[suburls.length-1];
+				//reponame = reponame.slice(0,-4);
+				console.log(username);
+				console.log(reponame);
+				
+				var page=1; //firsttime it's first page
+				eventsLoader(username,reponame,page);
+
+			});
+			$('#calendar').fullCalendar({
 			header: {
 				left: 'prev,next today',
 				center: 'title',
@@ -74,9 +134,11 @@
 			eventLimit: true, // allow "more" link when too many events
 			events: []
 		});
+	});
+
+	
 
 
-			});
 
 	</script>
 <style>
@@ -96,8 +158,7 @@
 <body>
 	<div style="float:center; width:100%">
 		<div style="float:left; width:38%" id="sidebar">
-			<input type="text" placeholder="Github Username" id="username"/>
-			<input type="text" placeholder="Repository Name" id="reponame"/>
+			<input type="text" placeholder="Enter Github Repository URL" id="url" style="width:80%"/>
 			<input type="button" value="GitCal" id="gitcal" class="fc-today-button fc-button fc-state-default fc-corner-left fc-corner-right"/>
 			<br>
 			<br>
