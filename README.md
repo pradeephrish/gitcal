@@ -8,4 +8,6 @@ Demo Can be Accessed at : pradeephrish.github.io/gitcal
 
 Here is Screenshot of Sample Project
 
+![alt tag](https://raw.github.com/pradeephrish/gitcal/gh-pages/images/gitCal.png)
+
 
